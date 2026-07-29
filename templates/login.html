@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – EduTrack Student Attendance System</title>
+  <meta name="description" content="Secure login for EduTrack Student Attendance System." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at 15% 15%, rgba(47, 129, 247, 0.12) 0%, transparent 45%),
+                  radial-gradient(circle at 85% 85%, rgba(163, 113, 247, 0.12) 0%, transparent 45%),
+                  var(--bg-base);
+      padding: 20px;
+    }
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+      animation: loginIn 0.4s ease-out;
+    }
+    @keyframes loginIn {
+      from { opacity: 0; transform: translateY(16px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .login-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple), var(--accent-green));
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-logo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      background: linear-gradient(135deg, rgba(47, 129, 247, 0.2), rgba(163, 113, 247, 0.2));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .login-sub {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .login-form input {
+      padding-left: 44px;
+      padding-right: 44px;
+      height: 46px;
+      font-size: 0.95rem;
+      border-radius: var(--radius-sm);
+    }
+    .pw-toggle {
+      position: absolute;
+      right: 12px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .pw-toggle:hover { color: var(--text-primary); }
+    .btn-login {
+      height: 48px;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      justify-content: center;
+      margin-top: 6px;
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      box-shadow: 0 4px 16px rgba(47, 129, 247, 0.3);
+    }
+    .btn-login:hover {
+      box-shadow: 0 6px 20px rgba(47, 129, 247, 0.4);
+    }
+    .error-alert {
+      background: rgba(248, 81, 73, 0.12);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      color: var(--accent-red);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .demo-accounts {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-light);
+    }
+    .demo-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .demo-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .demo-btn {
+      padding: 10px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all var(--transition);
+    }
+    .demo-btn:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-surface);
+      transform: translateY(-1px);
+    }
+    .demo-btn small {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+    .theme-toggle-fixed {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="theme-toggle theme-toggle-fixed" id="themeToggle" title="Toggle light/dark theme">
+    <span id="themeIcon">☀️</span>
+  </button>
+
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">🎓</div>
+      <h1 class="login-title">EduTrack</h1>
+      <p class="login-sub">Sign in to manage student attendance</p>
+    </div>
+
+    {% if error %}
+    <div class="error-alert">
+      <span>⚠️</span>
+      <div>{{ error }}</div>
+    </div>
+    {% endif %}
+
+    <form action="/login" method="POST" class="login-form">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input type="text" id="username" name="username" placeholder="Enter your username" value="{{ username or '' }}" required autofocus />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required />
+          <button type="button" class="pw-toggle" id="pwToggle" title="Toggle password visibility">👁️</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-login">Sign In</button>
+    </form>
+
+    <div class="demo-accounts">
+      <div class="demo-title">⚡ Quick Demo Logins</div>
+      <div class="demo-buttons">
+        <button type="button" class="demo-btn" onclick="loginDemo('admin', 'admin123')">
+          <span>🔑 Admin Login</span>
+          <small>admin / admin123</small>
+        </button>
+        <button type="button" class="demo-btn" onclick="loginDemo('teacher', 'teacher123')">
+          <span>👨‍🏫 Teacher Login</span>
+          <small>teacher / teacher123</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    function applyTheme(isLight) {
+      document.body.classList.toggle("light-mode", isLight);
+      document.getElementById("themeIcon").textContent = isLight ? "🌙" : "☀️";
+      localStorage.setItem("edutrack-theme", isLight ? "light" : "dark");
+    }
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const isLight = !document.body.classList.contains("light-mode");
+      applyTheme(isLight);
+    });
+    if (localStorage.getItem("edutrack-theme") === "light") {
+      applyTheme(true);
+    }
+
+    // Password visibility toggle
+    const pwInput = document.getElementById("password");
+    const pwToggle = document.getElementById("pwToggle");
+    pwToggle.addEventListener("click", () => {
+      const isPw = pwInput.type === "password";
+      pwInput.type = isPw ? "text" : "password";
+      pwToggle.textContent = isPw ? "🙈" : "👁️";
+    });
+
+    // Demo login autofill & submit
+    function loginDemo(user, pass) {
+      document.getElementById("username").value = user;
+      document.getElementById("password").value = pass;
+      document.querySelector(".login-form").submit();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduTrack – Student Attendance System</title>
+  <meta name="description" content="Modern student attendance tracking with subjects, leave management, analytics, QR codes, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- ═══════════════════════════════ SIDEBAR ═══════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <span class="logo-icon">🎓</span>
+      <div>
+        <span class="logo-text">EduTrack</span>
+        <span class="logo-sub">Attendance System</span>
+      </div>
+    </div>
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Close sidebar">&#9776;</button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-view="dashboard" id="nav-dashboard">
+      <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" data-view="attendance" id="nav-attendance">
+      <span class="nav-icon">✅</span><span class="nav-label">Mark Attendance</span>
+    </button>
+    <button class="nav-item" data-view="students" id="nav-students">
+      <span class="nav-icon">👥</span><span class="nav-label">Students</span>
+    </button>
+    <button class="nav-item" data-view="subjects" id="nav-subjects">
+      <span class="nav-icon">📚</span><span class="nav-label">Subjects</span>
+    </button>
+    <button class="nav-item" data-view="leaves" id="nav-leaves">
+      <span class="nav-icon">📋</span><span class="nav-label">Leave Management</span>
+    </button>
+    <button class="nav-item" data-view="holidays" id="nav-holidays">
+      <span class="nav-icon">🗓️</span><span class="nav-label">Holidays</span>
+    </button>
+    <button class="nav-item" data-view="reports" id="nav-reports">
+      <span class="nav-icon">📈</span><span class="nav-label">Reports</span>
+    </button>
+    <button class="nav-item" data-view="classes" id="nav-classes">
+      <span class="nav-icon">🏫</span><span class="nav-label">Classes</span>
+    </button>
+    <button class="nav-item" data-view="audit" id="nav-audit">
+      <span class="nav-icon">📝</span><span class="nav-label">Audit Log</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-date" id="sidebarDate"></div>
+    <div class="sidebar-quick-actions">
+      <a href="/api/backup" class="quick-action-btn" title="Download DB backup" download>
+        <span>💾</span> Backup DB
+      </a>
+      <button class="quick-action-btn" id="bulkImportSideBtn" title="Bulk import students">
+        <span>📥</span> Import CSV
+      </button>
+      <a href="/logout" class="quick-action-btn" style="color:var(--accent-red);border-color:rgba(248,81,73,0.3);" title="Sign Out">
+        <span>🚪</span> Logout
+      </a>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════ MAIN ═══════════════════════════════════ -->
+<main class="main" id="main">
+
+  <!-- ── TOP BAR ── -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" id="hamburgerBtn" aria-label="Open sidebar">&#9776;</button>
+      <h1 class="page-title" id="pageTitle">Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box" id="globalSearchBox">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="globalSearch" placeholder="Search students…" autocomplete="off" />
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle light/dark" aria-label="Toggle theme">
+        <span id="themeIcon">☀️</span>
+      </button>
+      <div class="user-badge" id="userBadge" title="Logged in as {{ user.name }}">
+        <span class="user-avatar-icon">👤</span>
+        <div class="user-info-text">
+          <span class="user-name-label">{{ user.name }}</span>
+          <span class="user-role-tag">{{ user.role }}</span>
+        </div>
+      </div>
+      <a href="/logout" class="btn btn-outline btn-sm logout-btn" title="Sign out">
+        <span>🚪</span> Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- ════════════════════ VIEW: DASHBOARD ════════════════════ -->
+  <section class="view active" id="view-dashboard">
+
+    <div class="stat-cards">
+      <div class="stat-card blue">
+        <div class="stat-icon">👩‍🎓</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total Students</div>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-present">—</div>
+          <div class="stat-label">Present Today</div>
+        </div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-icon">❌</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-absent">—</div>
+          <div class="stat-label">Absent Today</div>
+        </div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">⏰</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-late">—</div>
+          <div class="stat-label">Late Today</div>
+        </div>
+      </div>
+      <div class="stat-card purple">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info">
+          <div class="stat-value" id="stat-rate">—</div>
+          <div class="stat-label">Today's Rate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card chart-card">
+        <div class="card-header">
+          <h2 class="card-title">Weekly Attendance Trend</h2>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="weeklyChart"></canvas>
+        </div>
+      </div>
+      <div class="card donut-card">
+        <div class="card-header">
+          <h2 class="card-title">Today's Breakdown</h2>
+        </div>
+        <div class="chart-wrapper donut-wrapper">
+          <canvas id="todayDonut"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Monthly Chart -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">📅 Monthly Attendance Trend</h2>
+        <span class="card-sub">Last 6 months</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Rankings + Low Attendance side by side -->
+    <div class="dashboard-grid" style="margin-top:0;">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">🏆 Top Students</h2>
+          <span class="card-sub">Highest attendance</span>
+        </div>
+        <div id="rankingsList" class="ranking-list"></div>
+      </div>
+      <div class="card low-attendance-card">
+        <div class="card-header">
+          <h2 class="card-title">⚠️ Low Attendance <span class="badge badge-warn" id="lowCount">0</span></h2>
+          <span class="card-sub">Students below 75%</span>
+        </div>
+        <div id="lowAttendanceList" class="low-list"></div>
+      </div>
+    </div>
+
+    <!-- Upcoming holidays strip -->
+    <div class="card" id="upcomingHolidaysCard" style="display:none;">
+      <div class="card-header">
+        <h2 class="card-title">🗓️ Upcoming Holidays</h2>
+      </div>
+      <div id="upcomingHolidaysList" class="holiday-chips"></div>
+    </div>
+
+  </section>
+
+  <!-- ════════════════════ VIEW: ATTENDANCE ════════════════════ -->
+  <section class="view" id="view-attendance">
+    <div class="attendance-controls card">
+      <div class="control-row">
+        <div class="control-group">
+          <label for="attDate">📅 Date</label>
+          <input type="date" id="attDate" />
+        </div>
+        <div class="control-group">
+          <label for="attClass">🏫 Class</label>
+          <select id="attClass"><option value="">All Classes</option></select>
+        </div>
+        <div class="control-group">
+          <label for="attSubject">📚 Subject <span style="color:var(--text-muted);font-size:0.75rem;">(optional)</span></label>
+          <select id="attSubject"><option value="">— Daily (Overall) —</option></select>
+        </div>
+        <button class="btn btn-primary" id="loadAttBtn">Load Attendance</button>
+      </div>
+      <div class="bulk-actions" id="bulkActions" style="display:none;">
+        <span class="bulk-label">Mark All as:</span>
+        <button class="btn btn-sm btn-green" onclick="markAllAs('Present')">✅ Present</button>
+        <button class="btn btn-sm btn-red" onclick="markAllAs('Absent')">❌ Absent</button>
+        <button class="btn btn-sm btn-yellow" onclick="markAllAs('Late')">⏰ Late</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" id="saveAttBtn">💾 Save All</button>
+      </div>
+      <div class="kbd-hints" id="kbdHints">
+        <span class="kbd-title">⌨️ Keyboard shortcuts:</span>
+        <span><kbd>↑</kbd><kbd>↓</kbd> Navigate rows</span>
+        <span><kbd>P</kbd> Present</span>
+        <span><kbd>A</kbd> Absent</span>
+        <span><kbd>L</kbd> Late</span>
+        <span><kbd>E</kbd> Excused</span>
+        <span><kbd>S</kbd> Save all</span>
+      </div>
+    </div>
+
+    <div class="card" id="attendanceTableCard" style="display:none;">
+      <div class="card-header">
+        <h2 class="card-title" id="attTableTitle">Attendance</h2>
+        <span class="att-summary" id="attSummary"></span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="attendanceTable">
+          <thead>
+            <tr>
+              <th>#</th><th>Roll No.</th><th>Student Name</th>
+              <th>Class</th><th>Status</th><th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="attendanceTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: STUDENTS ════════════════════ -->
+  <section class="view" id="view-students">
+    <div class="view-actions">
+      <div class="filter-row">
+        <input type="text" id="studentSearchInput" placeholder="🔍 Search by name or roll…" class="filter-input" />
+        <select id="studentClassFilter" class="filter-select"><option value="">All Classes</option></select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" id="bulkImportBtn">📥 Import CSV</button>
+        <button class="btn btn-primary" id="addStudentBtn">+ Add Student</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table" id="studentsTable">
+          <thead>
+            <tr>
+              <th>Roll No.</th><th>Name</th><th>Class</th>
+              <th>Email</th><th>Attendance %</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pagination-bar" id="studentPagination" style="display:none;">
+      <span class="pagination-info" id="paginationInfo"></span>
+      <div class="pagination-controls">
+        <button class="page-btn" id="prevPageBtn">&#8249; Prev</button>
+        <div class="page-numbers" id="pageNumbers"></div>
+        <button class="page-btn" id="nextPageBtn">Next &#8250;</button>
+      </div>
+      <label class="page-size-label">Per page:
+        <select id="pageSizeSelect">
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </label>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: SUBJECTS ════════════════════ -->
+  <section class="view" id="view-subjects">
+    <div class="view-actions">
+      <div class="filter-row">
+        <select id="subjectClassFilter" class="filter-select"><option value="">All Classes</option></select>
+      </div>
+      <button class="btn btn-primary" id="addSubjectBtn">+ Add Subject</button>
+    </div>
+
+    <div id="subjectsContainer">
+      <div id="subjectGrid" class="subject-grid-list"></div>
+    </div>
+
+    <!-- Subject Attendance Panel -->
+    <div class="card" id="subjectAttCard" style="display:none;margin-top:16px;">
+      <div class="card-header">
+        <h2 class="card-title" id="subjectAttTitle">Subject Attendance</h2>
+        <span class="att-summary" id="subjectAttSummary"></span>
+      </div>
+      <div class="control-row" style="padding:0 0 14px 0;gap:10px;">
+        <input type="date" id="subjectAttDate" style="flex:none;width:180px;" />
+        <button class="btn btn-primary btn-sm" id="loadSubjectAttBtn">Load</button>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-sm" id="saveSubjectAttBtn" style="display:none;">💾 Save</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Roll No.</th><th>Student Name</th><th>Status</th></tr>
+          </thead>
+          <tbody id="subjectAttTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: LEAVES ════════════════════ -->
+  <section class="view" id="view-leaves">
+    <div class="view-actions">
+      <div class="filter-row">
+        <select id="leaveStatusFilter" class="filter-select">
+          <option value="">All Status</option>
+          <option value="Pending">Pending</option>
+          <option value="Approved">Approved</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" id="applyLeavesBtn">⚡ Apply Approved Leaves</button>
+        <button class="btn btn-primary" id="addLeaveBtn">+ Add Leave</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Student</th><th>Class</th><th>From</th>
+              <th>To</th><th>Reason</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="leavesTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: HOLIDAYS ════════════════════ -->
+  <section class="view" id="view-holidays">
+    <div class="view-actions" style="align-items:flex-start;gap:16px;">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:0.9rem;color:var(--text-secondary);">Add Holiday / Off-Day</h3>
+        <div class="filter-row" style="gap:10px;">
+          <input type="date" id="holidayDate" class="filter-input" style="width:160px;" />
+          <input type="text" id="holidayName" placeholder="Holiday name…" class="filter-input" style="width:220px;" />
+          <select id="holidayType" class="filter-select" style="width:140px;">
+            <option value="Holiday">🎉 Holiday</option>
+            <option value="Exam">📝 Exam Day</option>
+            <option value="Event">🎭 Event</option>
+            <option value="Other">📌 Other</option>
+          </select>
+          <button class="btn btn-primary" id="addHolidayBtn">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">All Holidays & Off-Days</h2>
+        <span class="card-sub" id="holidayCount"></span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Date</th><th>Day</th><th>Name</th><th>Type</th><th>Action</th></tr>
+          </thead>
+          <tbody id="holidaysTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: REPORTS ════════════════════ -->
+  <section class="view" id="view-reports">
+    <div class="card report-controls">
+      <div class="control-row">
+        <div class="control-group">
+          <label for="reportStart">📅 From</label>
+          <input type="date" id="reportStart" />
+        </div>
+        <div class="control-group">
+          <label for="reportEnd">📅 To</label>
+          <input type="date" id="reportEnd" />
+        </div>
+        <div class="control-group">
+          <label for="reportClass">🏫 Class</label>
+          <select id="reportClass"><option value="">All Classes</option></select>
+        </div>
+        <button class="btn btn-primary" id="genReportBtn">Generate Report</button>
+        <button class="btn btn-outline" id="exportCsvBtn">⬇ CSV</button>
+        <button class="btn btn-outline" id="exportExcelBtn">📊 Excel</button>
+      </div>
+    </div>
+
+    <div class="card" id="reportTableCard" style="display:none;">
+      <div class="card-header">
+        <h2 class="card-title">Attendance Report</h2>
+        <span class="card-sub" id="reportSub"></span>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="reportTable">
+          <thead>
+            <tr>
+              <th>Roll No.</th><th>Name</th><th>Class</th><th>Total</th>
+              <th>Present</th><th>Absent</th><th>Late</th><th>Excused</th><th>%</th>
+            </tr>
+          </thead>
+          <tbody id="reportTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════ VIEW: CLASSES ════════════════════ -->
+  <section class="view" id="view-classes">
+    <div class="view-actions">
+      <button class="btn btn-primary" id="addClassBtn">+ Add Class</button>
+    </div>
+    <div class="class-grid" id="classGrid"></div>
+  </section>
+
+  <!-- ════════════════════ VIEW: AUDIT LOG ════════════════════ -->
+  <section class="view" id="view-audit">
+    <div class="view-actions">
+      <span style="color:var(--text-secondary);font-size:0.85rem;">Last 100 system events</span>
+      <button class="btn btn-outline btn-sm" id="clearAuditBtn">🗑 Clear Log</button>
+    </div>
+    <div class="card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr><th>Time</th><th>Action</th><th>Entity</th><th>Description</th></tr>
+          </thead>
+          <tbody id="auditTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ═════════════════════════════ MODALS ══════════════════════════════════ -->
+
+<!-- Add/Edit Student Modal -->
+<div class="modal-overlay" id="studentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="studentModalTitle">Add Student</h2>
+      <button class="modal-close" onclick="closeModal('studentModal')">✕</button>
+    </div>
+    <form id="studentForm" class="modal-body">
+      <input type="hidden" id="studentId" />
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="fRoll">Roll Number *</label>
+          <input type="text" id="fRoll" placeholder="e.g. 1001" required />
+        </div>
+        <div class="form-group">
+          <label for="fName">Full Name *</label>
+          <input type="text" id="fName" placeholder="Student's full name" required />
+        </div>
+        <div class="form-group">
+          <label for="fClass">Class</label>
+          <select id="fClass"><option value="">— Select Class —</option></select>
+        </div>
+        <div class="form-group">
+          <label for="fEmail">Email</label>
+          <input type="email" id="fEmail" placeholder="student@school.edu" />
+        </div>
+        <div class="form-group">
+          <label for="fPhone">Phone</label>
+          <input type="text" id="fPhone" placeholder="Phone number" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('studentModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="studentSubmitBtn">Add Student</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Class Modal -->
+<div class="modal-overlay" id="classModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Add Class</h2>
+      <button class="modal-close" onclick="closeModal('classModal')">✕</button>
+    </div>
+    <form id="classForm" class="modal-body">
+      <div class="form-group">
+        <label for="fClassName">Class Name *</label>
+        <input type="text" id="fClassName" placeholder="e.g. B.Tech CSE" required />
+      </div>
+      <div class="form-group">
+        <label for="fClassSection">Section / Stream</label>
+        <input type="text" id="fClassSection" placeholder="e.g. Sem 1 - Section A" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('classModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Class</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Subject Modal -->
+<div class="modal-overlay" id="subjectModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Add Subject</h2>
+      <button class="modal-close" onclick="closeModal('subjectModal')">✕</button>
+    </div>
+    <form id="subjectForm" class="modal-body">
+      <div class="form-group">
+        <label for="fSubjectClass">Class *</label>
+        <select id="fSubjectClass"><option value="">— Select Class —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="fSubjectName">Subject Name *</label>
+        <input type="text" id="fSubjectName" placeholder="e.g. Mathematics" required />
+      </div>
+      <div class="form-group">
+        <label for="fSubjectCode">Subject Code</label>
+        <input type="text" id="fSubjectCode" placeholder="e.g. MATH101" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('subjectModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Subject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Leave Modal -->
+<div class="modal-overlay" id="leaveModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>Add Leave</h2>
+      <button class="modal-close" onclick="closeModal('leaveModal')">✕</button>
+    </div>
+    <form id="leaveForm" class="modal-body">
+      <div class="form-group">
+        <label for="fLeaveStudent">Student *</label>
+        <select id="fLeaveStudent"><option value="">— Select Student —</option></select>
+      </div>
+      <div class="form-group">
+        <label for="fLeaveFrom">From Date *</label>
+        <input type="date" id="fLeaveFrom" required />
+      </div>
+      <div class="form-group">
+        <label for="fLeaveTo">To Date *</label>
+        <input type="date" id="fLeaveTo" required />
+      </div>
+      <div class="form-group">
+        <label for="fLeaveReason">Reason</label>
+        <input type="text" id="fLeaveReason" placeholder="Reason for leave" />
+      </div>
+      <div class="form-group">
+        <label for="fLeaveStatus">Status</label>
+        <select id="fLeaveStatus">
+          <option value="Approved">Approved</option>
+          <option value="Pending">Pending</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('leaveModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Leave</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📥 Bulk Import Students</h2>
+      <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="import-instructions">
+        <p>Upload a <strong>CSV file</strong> with columns:</p>
+        <code>roll_number, name, class_name, email, phone</code>
+        <p style="margin-top:8px;">The <code>class_name</code> must exactly match an existing class display name.</p>
+        <a href="/api/students/import/template" class="btn btn-outline btn-sm" style="margin-top:6px;">⬇ Download Template</a>
+      </div>
+      <div class="form-group" style="margin-top:16px;">
+        <label for="importFile">Select CSV File</label>
+        <input type="file" id="importFile" accept=".csv" />
+      </div>
+      <div id="importResult" style="display:none;" class="import-result"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('importModal')">Cancel</button>
+        <button class="btn btn-primary" id="doImportBtn">Import Students</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Student Detail Modal -->
+<div class="modal-overlay" id="studentDetailModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="detailName">Student Details</h2>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-outline btn-sm" id="detailQrBtn">🔲 QR Code</button>
+        <button class="modal-close" onclick="closeModal('studentDetailModal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="studentDetailBody"></div>
+  </div>
+</div>
+
+<!-- QR Code Modal -->
+<div class="modal-overlay" id="qrModal">
+  <div class="modal modal-sm" style="text-align:center;">
+    <div class="modal-header">
+      <h2 id="qrModalTitle">Student QR Code</h2>
+      <button class="modal-close" onclick="closeModal('qrModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="qrContainer" style="padding:16px 0;">
+        <img id="qrImage" src="" alt="QR Code" style="max-width:220px;border-radius:8px;border:1px solid var(--border);" />
+      </div>
+      <p id="qrStudentInfo" style="color:var(--text-secondary);font-size:0.82rem;margin:0 0 12px;"></p>
+      <a id="qrDownloadBtn" href="#" download class="btn btn-primary btn-sm">⬇ Download QR</a>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard Shortcuts Modal -->
+<div class="modal-overlay" id="shortcutsModal">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>⌨️ Keyboard Shortcuts</h2>
+      <button class="modal-close" onclick="closeModal('shortcutsModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <table class="shortcuts-table">
+        <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>Navigate attendance rows</td></tr>
+        <tr><td><kbd>P</kbd></td><td>Mark focused row as Present</td></tr>
+        <tr><td><kbd>A</kbd></td><td>Mark focused row as Absent</td></tr>
+        <tr><td><kbd>L</kbd></td><td>Mark focused row as Late</td></tr>
+        <tr><td><kbd>E</kbd></td><td>Mark focused row as Excused</td></tr>
+        <tr><td><kbd>S</kbd></td><td>Save all attendance</td></tr>
+        <tr><td><kbd>?</kbd></td><td>Show this shortcuts panel</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Close modals</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div class="toast" id="toast"></div>
+
+<!-- Undo Toast -->
+<div class="undo-toast" id="undoToast">
+  <div class="undo-content">
+    <span class="undo-check">✅</span>
+    <span id="undoMsg">Attendance saved!</span>
+  </div>
+  <div class="undo-actions">
+    <button class="undo-btn" id="undoBtn">↩ Undo</button>
+    <div class="undo-progress-wrap">
+      <div class="undo-progress-bar" id="undoProgressBar"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
