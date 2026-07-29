@@ -6,7 +6,8 @@ import database as db
 app = Flask(__name__)
 app.secret_key = "edutrack-secret-key-2026-secure"
 
-UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), "static", "photos")
+IS_VERCEL = "VERCEL" in os.environ or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+UPLOAD_FOLDER = "/tmp/photos" if IS_VERCEL else os.path.join(os.path.dirname(__file__), "static", "photos")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_db()

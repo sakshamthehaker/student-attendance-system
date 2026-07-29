@@ -1,8 +1,19 @@
 import sqlite3
-import os
+import os, shutil
 from datetime import date, datetime, timedelta
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "attendance.db")
+IS_VERCEL = "VERCEL" in os.environ or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
+
+if IS_VERCEL:
+    DB_PATH = "/tmp/attendance.db"
+    bundled_db = os.path.join(os.path.dirname(__file__), "attendance.db")
+    if not os.path.exists(DB_PATH) and os.path.exists(bundled_db):
+        try:
+            shutil.copy2(bundled_db, DB_PATH)
+        except Exception:
+            pass
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "attendance.db")
 
 
 def get_connection():
