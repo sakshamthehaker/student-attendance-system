@@ -70,6 +70,36 @@ def api_me():
     })
 
 
+@app.route("/api/users", methods=["GET", "POST"])
+def api_users():
+    if session.get("user_role") != "Admin":
+        return jsonify({"error": "Admin access required"}), 403
+    if request.method == "GET":
+        return jsonify(db.get_all_users())
+    data = request.json or {}
+    username = data.get("username", "").strip()
+    password = data.get("password", "").strip()
+    name = data.get("name", "").strip()
+    role = data.get("role", "Teacher").strip()
+    if not username or not password or not name:
+        return jsonify({"error": "Name, Username and Password are required"}), 400
+    try:
+        new_id = db.add_user(username, password, name, role)
+        return jsonify({"success": True, "id": new_id}), 201
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/users/<int:user_id>", methods=["DELETE"])
+def api_delete_user(user_id):
+    if session.get("user_role") != "Admin":
+        return jsonify({"error": "Admin access required"}), 403
+    if user_id == session.get("user_id"):
+        return jsonify({"error": "Cannot delete your own account while logged in"}), 400
+    db.delete_user(user_id)
+    return jsonify({"success": True})
+
+
 # ── Pages ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")

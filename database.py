@@ -139,6 +139,30 @@ def get_user_by_id(user_id):
         row = conn.execute("SELECT id, username, name, role, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
 
+def get_all_users():
+    with get_connection() as conn:
+        rows = conn.execute("SELECT id, username, name, role, created_at FROM users ORDER BY id ASC").fetchall()
+        return [dict(r) for r in rows]
+
+def add_user(username, password, name, role="Teacher"):
+    with get_connection() as conn:
+        existing = conn.execute("SELECT id FROM users WHERE username = ?", (username,)).fetchone()
+        if existing:
+            raise ValueError(f"Username '{username}' already exists.")
+        cursor = conn.execute(
+            "INSERT INTO users (username, password_hash, name, role) VALUES (?, ?, ?, ?)",
+            (username, generate_password_hash(password), name, role)
+        )
+        log_audit("CREATE_USER", "User", f"Created user '{name}' ({role}) with username '{username}'")
+        return cursor.lastrowid
+
+def delete_user(user_id):
+    with get_connection() as conn:
+        user = get_user_by_id(user_id)
+        if user:
+            conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+            log_audit("DELETE_USER", "User", f"Deleted user '{user['name']}' ({user['username']})")
+
 def verify_user(username, password):
     user = get_user_by_username(username)
     if not user:
