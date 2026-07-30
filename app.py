@@ -381,13 +381,20 @@ def api_qr_code(student_id):
     student = db.get_student_by_id(student_id)
     if not student:
         return jsonify({"error": "Not found"}), 404
+    
+    # Format as standard vCard 3.0 (universally supported by iOS, Android & Google Lens camera apps)
+    host = request.host_url.rstrip('/')
     data = (
-        f"🎓 EDUTRACK STUDENT ID PASS\n"
-        f"Name: {student['name']}\n"
-        f"Roll No: {student['roll_number']}\n"
-        f"Class: {student.get('class_name', 'N/A')}\n"
-        f"Email: {student.get('email', 'N/A')}\n"
-        f"System ID: {student_id}"
+        f"BEGIN:VCARD\n"
+        f"VERSION:3.0\n"
+        f"FN:{student['name']}\n"
+        f"ORG:{student.get('class_name', 'Student')}\n"
+        f"TITLE:Roll No: {student['roll_number']}\n"
+        f"EMAIL:{student.get('email', '')}\n"
+        f"TEL:{student.get('phone', '')}\n"
+        f"URL:{host}/?student_id={student_id}\n"
+        f"NOTE:EduTrack Student Pass (ID: {student_id})\n"
+        f"END:VCARD"
     )
     qr = qrcode.QRCode(version=1, box_size=8, border=3)
     qr.add_data(data)
