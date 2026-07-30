@@ -20,7 +20,7 @@ db.init_db()
 
 @app.before_request
 def require_login():
-    public_paths = ["/login", "/static/"]
+    public_paths = ["/login", "/static/", "/api/index"]
     if any(request.path.startswith(p) for p in public_paths):
         return None
     if "user_id" not in session:
@@ -73,6 +73,7 @@ def api_me():
 # ── Pages ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")
+@app.route("/api/index")
 def index():
     return render_template("index.html", user={
         "name": session.get("user_name", "User"),
@@ -432,5 +433,5 @@ def api_csv_template():
 
 if __name__ == "__main__":
     print("\n  Student Attendance System is running!")
-    print("   Open your browser at -> http://127.0.0.1:5000\n")
-    app.run(host="127.0.0.1", port=5000, debug=True, use_reloader=False)
+    print("   Open your browser at -> http://127.0.0.1:5000 or http://<YOUR_IP>:5000 on phone\n")
+    app.run(host="0.0.0.0", port=5000, debug=True, use_reloader=False)
