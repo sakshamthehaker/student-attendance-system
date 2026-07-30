@@ -1276,4 +1276,11 @@ async function goToStudent(id) {
 (async function init() {
   await loadClasses();
   loadDashboard();
+  const urlParams = new URLSearchParams(window.location.search);
+  const sid = urlParams.get("student_id");
+  if (sid) {
+    switchView("students");
+    await new Promise(r => setTimeout(r, 150));
+    viewStudent(sid);
+  }
 })();
