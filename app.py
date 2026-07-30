@@ -1,10 +1,14 @@
 from flask import Flask, render_template, jsonify, request, Response, send_file, session, redirect, url_for
 import csv, io, os
-from datetime import date
+from datetime import date, timedelta
 import database as db
 
 app = Flask(__name__)
 app.secret_key = "edutrack-secret-key-2026-secure"
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SECURE"] = False
 
 IS_VERCEL = "VERCEL" in os.environ or "AWS_LAMBDA_FUNCTION_NAME" in os.environ
 UPLOAD_FOLDER = "/tmp/photos" if IS_VERCEL else os.path.join(os.path.dirname(__file__), "static", "photos")
@@ -35,6 +39,7 @@ def login():
         password = request.form.get("password", "").strip()
         user = db.verify_user(username, password)
         if user:
+            session.permanent = True
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             session["user_name"] = user["name"]

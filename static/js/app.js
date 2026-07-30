@@ -38,6 +38,10 @@ async function api(url, options = {}) {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
+  if (res.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.error || `HTTP ${res.status}`);
