@@ -381,7 +381,14 @@ def api_qr_code(student_id):
     student = db.get_student_by_id(student_id)
     if not student:
         return jsonify({"error": "Not found"}), 404
-    data = f"ID:{student_id}|Roll:{student['roll_number']}|Name:{student['name']}|Class:{student.get('class_name','')}"
+    data = (
+        f"🎓 EDUTRACK STUDENT ID PASS\n"
+        f"Name: {student['name']}\n"
+        f"Roll No: {student['roll_number']}\n"
+        f"Class: {student.get('class_name', 'N/A')}\n"
+        f"Email: {student.get('email', 'N/A')}\n"
+        f"System ID: {student_id}"
+    )
     qr = qrcode.QRCode(version=1, box_size=8, border=3)
     qr.add_data(data)
     qr.make(fit=True)
